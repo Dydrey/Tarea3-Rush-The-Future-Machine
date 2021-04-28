@@ -3,9 +3,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include<sys/stat.h>
-#include<sys/sendfile.h>
-#include<fcntl.h>
+#include <sys/stat.h>
+#include <sys/sendfile.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <arpa/inet.h>
+
 
 int main(int argc,char *argv[])
 {
@@ -19,27 +22,28 @@ int main(int argc,char *argv[])
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if(sock == -1)
     {
-        printf("socket creation failed");
+        printf("Creacion del socket fallida");
         exit(1);
     }
     server.sin_family = AF_INET;
     server.sin_port = atoi(argv[1]);
-    server.sin_addr.s_addr = 0;
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
     k = connect(sock,(struct sockaddr*)&server, sizeof(server));
     if(k == -1)
     {
-        printf("Connect Error\n");
+        printf("Error de conexion\n");
+        perror("connect");
         exit(1);
     }
-
+    int i = 1;
     while(1)
     {
-        printf("Enter a choice:\n1- get\n2- put\n3- pwd\n4- ls\n5- cd\n6- quit\n");
+        printf("Escoja un comando:\n1- get\n2- put\n3- pwd\n4- ls\n5- cd\n6- quit\n");
         scanf("%d", &choice);
         switch(choice)
         {
             case 1:
-                printf("Enter filename to get: ");
+                printf("Introduzca el nombre del archivo: ");
                 scanf("%s", filename);
                 strcpy(buf, "get ");
                 strcat(buf, filename);
@@ -47,7 +51,7 @@ int main(int argc,char *argv[])
                 recv(sock, &size, sizeof(int), 0);
                 if(!size)
                 {
-                    printf("No such file on the remote directory\n\n");
+                    printf("No se encontro el archivo\n\n");
                     break;
                 }
                 f = malloc(size);
@@ -68,12 +72,12 @@ int main(int argc,char *argv[])
                 system(buf);
                 break;
             case 2:
-                printf("Enter filename to put to server: ");
+                printf("Introduzca nombre del archivo: ");
                 scanf("%s", filename);
                 filehandle = open(filename, O_RDONLY);
                 if(filehandle == -1)
                 {
-                    printf("No such file on the local directory\n\n");
+                    printf("No existe el archivo\n\n");
                     break;
                 }
                 strcpy(buf, "put ");
@@ -85,15 +89,15 @@ int main(int argc,char *argv[])
                 sendfile(sock, filehandle, NULL, size);
                 recv(sock, &status, sizeof(int), 0);
                 if(status)
-                    printf("File stored successfully\n");
+                    printf("Archivo guardado con exito\n");
                 else
-                    printf("File failed to be stored to remote machine\n");
+                    printf("Error al guardar el archivo\n");
                 break;
             case 3:
                 strcpy(buf, "pwd");
                 send(sock, buf, 100, 0);
                 recv(sock, buf, 100, 0);
-                printf("The path of the remote directory is: %s\n", buf);
+                printf("La direccion del directorio remoto es: %s\n", buf);
                 break;
             case 4:
                 strcpy(buf, "ls");
@@ -104,19 +108,18 @@ int main(int argc,char *argv[])
                 filehandle = creat("temp.txt", O_WRONLY);
                 write(filehandle, f, size, 0);
                 close(filehandle);
-                printf("The remote directory listing is as follows:\n");
                 system("cat temp.txt");
                 break;
             case 5:
                 strcpy(buf, "cd ");
-                printf("Enter the path to change the remote directory: ");
+                printf("Introduzca la direccion del directorio: ");
                 scanf("%s", buf + 3);
                 send(sock, buf, 100, 0);
                 recv(sock, &status, sizeof(int), 0);
                 if(status)
-                    printf("Remote directory successfully changed\n");
+                    printf("Directorio cambiado con exito\n");
                 else
-                    printf("Remote directory failed to change\n");
+                    printf("Error al tratar de cambiar directorio\n");
                 break;
             case 6:
                 strcpy(buf, "quit");
@@ -124,10 +127,10 @@ int main(int argc,char *argv[])
                 recv(sock, &status, 100, 0);
                 if(status)
                 {
-                    printf("Server closed\nQuitting..\n");
+                    printf("Servidor desconectado\nSaliendo...\n");
                     exit(0);
                 }
-                printf("Server failed to close connection\n");
+                printf("Error al cerrar la conexion con el servidor\n");
         }
     }
 }

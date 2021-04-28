@@ -11,6 +11,7 @@
 #include<sys/stat.h>
 #include<sys/sendfile.h>
 #include<fcntl.h>
+#include <arpa/inet.h>
 
 #define maxlen 100000
 
@@ -69,18 +70,17 @@ void* clientConnection(){
 
             char buffer[30000] = {0};
             char *args[3];
-            int i, size;
+            int i, size, c;
             int filehandle;
             struct stat obj;
             char filename[20];
 
             long long valread = read( *((int*)client) , buffer, 30000);
-            printf("%s",buffer);
             //tomamos el primer argumento
 
             args[0] = strtok(buffer," \t\n");
 
-            //si es una peticion get
+            //si es una peticion ls
             if(!strcmp(args[0], "ls"))
             {
                 system("ls >temps.txt");
@@ -103,6 +103,57 @@ void* clientConnection(){
                 if(size)
                     sendfile(*((int*)client), filehandle, NULL, size);
 
+            }
+            else if(!strcmp(args[0], "put"))
+            {
+                int c = 0, len;
+                char *f;
+                sscanf(buffer+strlen(args[0]), "%s", filename);
+                recv(*((int*)client), &size, sizeof(int), 0);
+                i = 1;
+                while(1)
+                {
+                    filehandle = open(filename, O_CREAT | O_EXCL | O_WRONLY, 0666);
+                    if(filehandle == -1)
+                    {
+                        sprintf(filename + strlen(filename), "%d", i);
+                    }
+                    else
+                        break;
+                }
+                f = malloc(size);
+                recv(*((int*)client), f, size, 0);
+                c = write(filehandle, f, size);
+                close(filehandle);
+                send(*((int*)client), &c, sizeof(int), 0);
+            }
+            else if(!strcmp(args[0], "pwd"))
+            {
+                system("pwd>temp.txt");
+                i = 0;
+                FILE*f = fopen("temp.txt","r");
+                while(!feof(f))
+                    buffer[i++] = fgetc(f);
+                buffer[i-1] = '\0';
+                fclose(f);
+                send(*((int*)client), buffer, 100, 0);
+            }
+            else if(!strcmp(args[0], "cd"))
+            {
+                if(chdir(buffer+3) == 0)
+                    c = 1;
+                else
+                    c = 0;
+                send(*((int*)client), &c, sizeof(int), 0);
+            }
+
+
+            else if(!strcmp(args[0], "bye") || !strcmp(args[0], "quit"))
+            {
+                printf("FTP server quitting..\n");
+                i = 1;
+                send(*((int*)client), &i, sizeof(int), 0);
+                exit(0);
             }
             close(*((int*)client));
         }
@@ -133,8 +184,8 @@ int start_listening(){
     //establezco la direccion y los puertos
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(PORT);
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    servaddr.sin_port = PORT;
 
     // Enlace de socket recién creado a la IP y verificación // < 0
     if((bind(listening, (struct sockaddr *)&servaddr, sizeof(servaddr))) != 0){
@@ -156,10 +207,10 @@ void waitConnection(){
     while(1){//loop infinito esperando las conexiones
         struct sockaddr_in addr;
         socklen_t addr_len;
-        int len = sizeof(addr);
+        addr_len = sizeof(addr);
 
         printf("Esperando conexion\n");
-        int socket = accept(listening, (struct sockaddr *)&addr, &len);
+        clientSocket = accept(listening, (struct sockaddr*)&addr, &addr_len);
         if (clientSocket < 0){
             printf("Aceptación fallida...\n");
             exit(0);
@@ -167,7 +218,7 @@ void waitConnection(){
 
         printf("Cliente aceptado e insertandolo en la cola\n");
         int *client_socket = malloc(sizeof(int));
-        *client_socket = socket; // le damos al cliente el socket que recibimos
+        *client_socket = clientSocket; // le damos al cliente el socket que recibimos
 
         pthread_mutex_lock(&lock);//le doy prioridad a este proceso
         push(client_socket);
