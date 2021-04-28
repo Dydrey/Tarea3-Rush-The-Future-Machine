@@ -1,0 +1,224 @@
+\documentclass[a4paper,12pt,twoside]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[]{graphicx}
+%================configuracões da pagina=========================
+
+\setlength{\paperwidth}{21cm}          % Largura da página
+\setlength{\paperheight}{29,7cm}       % Altura da página
+\setlength{\textwidth}{15.5cm}         % Largura do texto
+\setlength{\textheight}{24.6cm}        % Altura do texto
+\setlength{\topmargin}{-1.0cm}         % Margem superior da página = 1 polegada + valor atribuição.
+                                      % \setlenght{\topmargin}{0cm} dá 2.54cm de margem superior.
+\setlength{\oddsidemargin}{0.46cm}   % Margem esquerda = 1 polegada + valor
+\setlength{\evensidemargin}{0.46cm} 
+
+
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%% 			CAPA DO TRABALHO ou Folha de rosto					 	 %%%%%%%%%%%%
+%a. Folha de rosto, contendo os seguintes itens:							
+%• Nome do aluno;
+%• Nome do orientador e coorientador, se houver;
+%• Data de início do Doutorado;
+%• Se for bolsista, nome da agência financiadora e data de início da bolsa;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.5]{logo-tec.png}
+  \vspace*{-0.3cm}
+\end{figure}
+
+\begin{center}
+{\large \rm \textheight {INSTITUTO TECNOLÓGICO DE COSTA RICA} \linebreak}
+{\large \rm \textheight  {INGENIERÍA EN COMPUTACIÓN} \linebreak}
+{\large \rm \textheight  {PRINCIPIOS DE SISTEMAS OPERATIVOS} \linebreak}
+\end{center}
+
+\baselineskip 30pt
+
+\vspace*{1 cm}
+
+\begin{center}
+{\LARGE \bf Rust The Future Machine}
+\end{center}
+
+\vspace*{2cm}
+
+\setcounter{footnote}{1}
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\begin{center}
+{\Large \textheight Dylan González Quesada - 2017118729
+\\}
+{\Large \textheight Sebastián Solórzano Guzmán - 2016138505
+\\}
+\vspace*{0.3cm}
+
+\center{\Large \textheight Profesor:} \vspace*{-.5cm} \center{\Large \textheight Kevin Moraga}
+\end{center}
+
+\setcounter{footnote}{1}
+
+\vspace*{2 cm}
+
+\baselineskip 17pt
+
+\vspace*{1.5cm}
+\begin{center}
+{{\bf \large \textheight Sede Inter-Universitaria Alajuela \par{Abril 2021}}}
+\end{center}
+
+\vspace*{.05cm}
+
+
+\renewcommand{\thefootnote}{\arabic{footnote}}
+
+\setcounter{footnote}{1}
+
+\pagebreak
+
+\baselineskip 19pt
+
+\newpage
+\renewcommand{\contentsname}{Tabla de contenidos}
+\tableofcontents
+
+\newpage
+
+\section{Introducción}
+Descripción del problema:
+El problema consiste en administrar mejor los recursos de un servidor FTP por si se llegara a saturar el servicio, para esto se debe realizar un cliente y un servidor web utilizando el protocolo FTP y utilizar las técnicas pre-thread y pre-forked para la administración de los recursos del servidor. 
+
+\subsection{Pre-thread:}
+Pre-thread es una técnica que consiste en crear previamente varios hilos de ejecución del método que atiende la solicitudes. Estos hilos se crean utilizando la biblioteca pthreads de Unix.
+
+\subsection{Pre-forked:}
+Pre-forked es una técnica que consiste en crear previamente varios procesos del método que atiende las solicitudes. Estos procesos se crean utilizando el system call estándar de Unix.
+
+\subsection{StressCMD:}
+Adicionalmente se debe crear una aplicación que tendrá como objetivo lanzar un ataque de denegación de servicio sobre los servidores haciendo uso de los clientes FTP, esto con el fin de saturar los servidores hasta que estos no puedan atender más solicitudes.
+
+\newpage
+
+\section{Ambiente de desarrollo:}
+
+\subsection{Entorno de desarrollo:}
+Para el desarrollo de la tarea se utilizó el IDE de JetBrains, CLion. En este IDE se trabajó ambos C y Rust.
+
+\subsection{Forma de debuggin:}
+Para el depuramiento se utilizó el debugger que tiene CLion incorporado.
+
+\subsection{Flujo de trabajo:}
+Para el depuramiento se utilizó el debugger que tiene CLion incorporado. Para el control de versiones, se utilizó un repositorio en git, donde habrán 2 ramas, una que sería la rama “master” con la funcionalidad final y una segunda la rama “dev”. En esta segunda es donde se resolvieron todos los issues que se necesitan para resolver el problema.
+
+\newpage
+
+\section{Estructura de datos usadas y funciones:}
+\subsection{FTPClient}
+\subsubsection{Funciones}
+main: Se conecta con el servidor y muestra las opciones que se pueden realizar en el servidor FTP.
+\subsection{FTPServer}
+\subsubsection{Funciones}
+push: Función para meter un nuevo nodo a la cola de nodos.\\
+pop: Función para quitar un nodo a la cola de nodos.\\
+error: Función que imprime el error.
+clientConnection: Función para conectar el servidor con el cliente. Aquí se acepta la conexión y se toma el primer argumento de la llamada y se verifica el tipo de petición que es.\\
+start\_listening: Función para que el servidor escuche. Se pre crean los hilos y el socket que escucha. Luego se establece la dirección y los puertos. Se crea el enlace del socket de escucha a la dirección IP y se verifica.\\
+waitConnection: Esta función es un loop infinito donde se esperan las conexiones, donde se le asigna el cliente al socket que se recibe.\\
+main: Función principal del servidor. Aquí se toman los parámetros de la entrada y se llama a la inicialización y escucha del servidor.
+
+\subsubsection{Estructuras}
+node: Estructura básica de un nodo.\\
+node* top: estructura de un nodo con puntero hacia arriba.\\
+node*base: estructura de un nodo con puntero hacia la base.\\
+
+\newpage
+
+\section{Instrucciones para ejecutar el programa:}
+Compilar el servidor con el comando:\\
+gcc -FTPServer.c -o server\\
+\\
+Compilar el cliente con el comando:\\
+gcc -FTPClient.c -o cliente\\
+\\
+Ejecutar el servidor con el comando:\\
+./server -n 10 -w ../Files -p 8080\\
+\\
+Ejecutar el cliente con el comando:\\
+./cliente 8080\\
+\\
+\newpage
+
+\section{Actividades realizadas por estudiante:}
+\begin{tabular}{|l|l|l|l|}
+\hline
+Día & Estudiante & Horas & Actividad \\ \hline
+25/04/2021 & Dylan & 4 & Buscar información sobre servidor FTP y programar un poco el servidor\\ \hline
+25/04/2021 & Sebastián & 4 & Buscar información sobre pre thread y pre fork \\ \hline
+26/04/2021 & Dylan & 3 & Trabajar en el servidor pre thread \\ \hline
+26/04/2021 & Sebastían & 6 & Programar cliente en C y servidor pre thread \\ \hline
+27/04/2021 & Dylan & 5 & Reunión de equipo y creación de la documentación externa \\ \hline
+27/04/2021 & Sebastián & 5 & Reunión de equipo y creación de la documentación externa \\ \hline
+\end{tabular}
+\newpage
+
+\section{Autoevaluación}
+Se cuenta con el servidor FTP que utiliza la técnica del pre thread, este inicializa correctamente, crea los hilos y recibe conexiones de clientes, sin embargo no realiza las peticiones del cliente. El cliente está hecho en C y este se conecta correctamente al servidor, envía las solicitudes y recibe la respuesta del servidor. Hubo problemas a la hora de conectar el cliente con el servidor y de procesar las solicitudes del cliente, por lo que no dio tiempo de hacer el servidor pre forked. \\
+\subsubsection{Evaluación}
+\begin{tabular}{|l|l|}
+\hline
+Calificación & Tema \\ \hline
+8 & Implementación del Pre-thread \\ \hline
+0 & Implementación del Pre-forked \\ \hline
+0 & Servir archivos grandes correctamente \\ \hline
+0 & Descargar un archivo por FTP desde un navegador u otro cliente FTP \\ \hline
+5 & Implementación de Protocolos \\ \hline
+0 & ftpclient en Rust \\ \hline
+10 & ftpclient en C \\ \hline
+0 & Stress-Client \\ \hline
+10 & Documentación \\ \hline
+10 & Kick-off \\ \hline
+
+\end{tabular}
+
+\subsubsection{Autoevaluación}
+\textbf{Sebastián}\\
+\begin{tabular}{|l|l|}
+\hline
+Calificación & Tema \\ \hline
+4 & Aprendizaje de Pre-thread. \\ \hline
+3 & Aprendizaje de Pre-forked \\ \hline
+4 & Aprendizaje de comunicacion entre procesos. \\ \hline
+4 & Aprendizaje de sockets. \\ \hline
+\end{tabular}
+\\
+\\
+\textbf{Dylan}\\
+\begin{tabular}{|l|l|}
+\hline
+Calificación & Tema \\ \hline
+3 & Aprendizaje de Pre-thread. \\ \hline
+3 & Aprendizaje de Pre-forked \\ \hline
+3 & Aprendizaje de comunicacion entre procesos. \\ \hline
+3 & Aprendizaje de sockets. \\ \hline
+
+\end{tabular}
+\newpage
+
+\section{Lecciones aprendidas}
+\subsection{Dylan}
+Con esta tarea aprendí un poco sobre el funcionamiento de los servidores FTP orientado a hilos. También recordé un poco sobre el lenguaje C y me quedó de lección a administrar mejor el tiempo.
+\subsection{Sebastián}
+Como programar un servidor y cliente con el protocolo FTP, el uso de la técnica de diseño de servidores pre thread y en general como trabajar con sockets.
+\newpage
+
+\section{Bibliografía}
+Developer, I. (2020). Before you continue to YouTube. Retrieved 25 April 2021, from https://www.youtube.com/watch?v=7d7\_G81uews.\\
+Tomar, N. (2020). nikhilroxtomar/File-Transfer-using-TCP-Socket-in-C. Retrieved 26 April 2021, from https://github.com/nikhilroxtomar/File-Transfer-using-TCP-Socket-in-C/blob/master/server.c\\
+Developer, I. (2020). Before you continue to YouTube. Retrieved 27 April 2021, from https://www.youtube.com/watch?v=BIJGSQEipEE
+
+\end{document}
